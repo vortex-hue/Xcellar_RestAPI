@@ -1,6 +1,6 @@
 # Xcellar - Django REST Framework Backend
 
-A scalable Django REST Framework backend boilerplate for mobile applications with n8n workflow automation integration.
+A scalable Django REST Framework backend for mobile applications with n8n workflow automation integration.
 
 ## Features
 
@@ -13,6 +13,7 @@ A scalable Django REST Framework backend boilerplate for mobile applications wit
 - **Rate limiting** on all endpoints
 - **Scalable architecture** with separated apps
 - **API versioning** ready
+- **Interactive API Documentation** with Swagger UI
 
 ## Project Structure
 
@@ -40,7 +41,7 @@ xcellar/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Qubic-Group/Xcellar_RestAPI.git
    cd Xcellar
    ```
 
@@ -72,7 +73,34 @@ xcellar/
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
 
+## API Documentation
+
+The API is fully documented with interactive Swagger UI and ReDoc interfaces:
+
+- **Swagger UI**: http://localhost:8000/api/docs/
+  - Interactive API explorer
+  - Test endpoints directly from the browser
+  - JWT authentication support
+  - Request/response examples
+
+- **ReDoc**: http://localhost:8000/api/redoc/
+  - Clean, readable API documentation
+  - Better for reading and understanding
+
+- **OpenAPI Schema**: http://localhost:8000/api/schema/
+  - Downloadable OpenAPI 3.0 JSON schema
+  - Can be imported into Postman, Insomnia, etc.
+
+### Using the Interactive Documentation
+
+1. Visit http://localhost:8000/api/docs/
+2. Click "Authorize" button
+3. Enter your JWT token (obtained from login endpoint)
+4. Test any endpoint directly from the browser!
+
 ## API Endpoints
+
+For full API documentation, visit http://localhost:8000/api/docs/
 
 ### Authentication
 - `POST /api/v1/auth/register/user/` - Register regular customer

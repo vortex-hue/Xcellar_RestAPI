@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_extensions',
+    'drf_spectacular',
     
     # Local apps
     'apps.core',
@@ -116,6 +117,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # JWT Settings
@@ -172,4 +174,63 @@ SESSION_CACHE_ALIAS = 'default'
 N8N_API_URL = os.environ.get('N8N_API_URL', 'http://n8n:5678')
 N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET', '')
 N8N_API_KEY = os.environ.get('N8N_API_KEY', '')
+
+# drf-spectacular Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Xcellar API',
+    'DESCRIPTION': '''
+    Xcellar API - Mobile Application Backend
+    
+    A scalable Django REST Framework backend for mobile applications with n8n workflow automation integration.
+    
+    ## Features
+    - User authentication with JWT tokens
+    - Multi-user type support (Regular Users and Couriers)
+    - Role-based permissions
+    - Rate limiting
+    - n8n workflow automation integration
+    
+    ## Authentication
+    Use the "Authorize" button below to authenticate with a JWT token.
+    Tokens are obtained through the login endpoint.
+    ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/v1',
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User authentication and registration endpoints'},
+        {'name': 'Users', 'description': 'Regular customer endpoints'},
+        {'name': 'Couriers', 'description': 'Courier/driver endpoints'},
+        {'name': 'Automation', 'description': 'n8n workflow automation endpoints'},
+    ],
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,  # Persist authorization token in browser
+        'displayRequestDuration': True,
+        'filter': True,
+        'showExtensions': True,
+        'showCommonExtensions': True,
+        'tryItOutEnabled': True,
+    },
+    'SWAGGER_UI_FAVICON_HREF': '/static/favicon.ico',
+    'REDOC_UI_SETTINGS': {
+        'hideDownloadButton': False,
+        'expandResponses': '200,201',
+        'pathInMiddlePanel': True,
+    },
+    'AUTHENTICATION_WHITELIST': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
+    'SECURITY': [{'BearerAuth': []}],
+}
 

@@ -20,10 +20,30 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""
-    password = serializers.CharField(write_only=True, min_length=8)
-    password_confirm = serializers.CharField(write_only=True, min_length=8)
-    first_name = serializers.CharField(write_only=True)
-    last_name = serializers.CharField(write_only=True)
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text='Password must be at least 8 characters long'
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text='Confirm password - must match password'
+    )
+    first_name = serializers.CharField(
+        write_only=True,
+        help_text='User first name'
+    )
+    last_name = serializers.CharField(
+        write_only=True,
+        help_text='User last name'
+    )
+    email = serializers.EmailField(
+        help_text='User email address (must be unique)'
+    )
+    phone_number = serializers.CharField(
+        help_text='Phone number in international format (e.g., +1234567890)'
+    )
 
     class Meta:
         model = User
@@ -55,10 +75,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class CourierRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for courier registration"""
-    password = serializers.CharField(write_only=True, min_length=8)
-    password_confirm = serializers.CharField(write_only=True, min_length=8)
-    first_name = serializers.CharField(write_only=True)
-    last_name = serializers.CharField(write_only=True)
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text='Password must be at least 8 characters long'
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text='Confirm password - must match password'
+    )
+    first_name = serializers.CharField(
+        write_only=True,
+        help_text='Courier first name'
+    )
+    last_name = serializers.CharField(
+        write_only=True,
+        help_text='Courier last name'
+    )
+    email = serializers.EmailField(
+        help_text='Courier email address (must be unique)'
+    )
+    phone_number = serializers.CharField(
+        help_text='Phone number in international format (e.g., +1234567890)'
+    )
 
     class Meta:
         model = User

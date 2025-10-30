@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django_ratelimit.decorators import ratelimit
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 import logging
 
 from .models import WorkflowLog, AutomationTask
@@ -11,6 +13,64 @@ from .models import WorkflowLog, AutomationTask
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(
+    tags=['Automation'],
+    summary='n8n Webhook',
+    description='Webhook endpoint for n8n workflows to call Django APIs. This endpoint receives POST requests from n8n automation workflows.',
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'action': {
+                    'type': 'string',
+                    'description': 'Action to perform',
+                    'example': 'test',
+                },
+                'data': {
+                    'type': 'object',
+                    'description': 'Data payload',
+                    'example': {},
+                },
+            },
+            'required': ['action'],
+        }
+    },
+    responses={
+        200: {
+            'description': 'Webhook processed successfully',
+            'examples': {
+                'application/json': {
+                    'status': 'success',
+                    'message': 'Webhook received successfully',
+                    'data': {},
+                }
+            }
+        },
+        400: {'description': 'Bad request - invalid payload'},
+        429: {'description': 'Rate limit exceeded (100 requests per hour)'},
+    },
+    examples=[
+        OpenApiExample(
+            'Webhook Request',
+            value={
+                'action': 'test',
+                'data': {
+                    'key': 'value',
+                },
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Webhook Response',
+            value={
+                'status': 'success',
+                'message': 'Webhook received successfully',
+                'data': {},
+            },
+            response_only=True,
+        ),
+    ],
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @ratelimit(key='ip', rate='100/h', method='POST')
@@ -62,6 +122,47 @@ def n8n_webhook(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    tags=['Automation'],
+    summary='Get Workflow Logs',
+    description='Retrieve the last 50 workflow execution logs from n8n automation.',
+    responses={
+        200: {
+            'description': 'List of workflow logs',
+            'examples': {
+                'application/json': {
+                    'logs': [
+                        {
+                            'id': 1,
+                            'workflow_id': 'workflow_123',
+                            'workflow_name': 'Order Processing',
+                            'status': 'SUCCESS',
+                            'executed_at': '2025-10-30T18:00:00Z',
+                        }
+                    ]
+                }
+            }
+        },
+        429: {'description': 'Rate limit exceeded (100 requests per hour)'},
+    },
+    examples=[
+        OpenApiExample(
+            'Workflow Logs Response',
+            value={
+                'logs': [
+                    {
+                        'id': 1,
+                        'workflow_id': 'workflow_123',
+                        'workflow_name': 'Order Processing',
+                        'status': 'SUCCESS',
+                        'executed_at': '2025-10-30T18:00:00Z',
+                    }
+                ]
+            },
+            response_only=True,
+        ),
+    ],
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 @ratelimit(key='ip', rate='100/h', method='GET')
@@ -85,6 +186,47 @@ def workflow_logs(request):
     }, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=['Automation'],
+    summary='Get Automation Tasks',
+    description='Retrieve the last 50 automation tasks triggered from Django.',
+    responses={
+        200: {
+            'description': 'List of automation tasks',
+            'examples': {
+                'application/json': {
+                    'tasks': [
+                        {
+                            'id': 1,
+                            'task_type': 'ORDER_CREATED',
+                            'workflow_id': 'workflow_123',
+                            'status': 'SUCCESS',
+                            'created_at': '2025-10-30T18:00:00Z',
+                        }
+                    ]
+                }
+            }
+        },
+        429: {'description': 'Rate limit exceeded (100 requests per hour)'},
+    },
+    examples=[
+        OpenApiExample(
+            'Automation Tasks Response',
+            value={
+                'tasks': [
+                    {
+                        'id': 1,
+                        'task_type': 'ORDER_CREATED',
+                        'workflow_id': 'workflow_123',
+                        'status': 'SUCCESS',
+                        'created_at': '2025-10-30T18:00:00Z',
+                    }
+                ]
+            },
+            response_only=True,
+        ),
+    ],
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 @ratelimit(key='ip', rate='100/h', method='GET')
