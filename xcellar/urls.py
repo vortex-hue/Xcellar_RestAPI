@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/v1/automation/', include('apps.automation.urls')),
     path('api/v1/verification/', include('apps.verification.urls')),
     path('api/v1/faq/', include('apps.faq.urls')),
+    path('api/v1/help/', include('apps.help.urls')),
     
     # Password reset web pages
     path('reset-password/', include('apps.accounts.password_reset.urls')),

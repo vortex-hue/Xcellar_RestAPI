@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'apps.automation',
     'apps.verification',
     'apps.faq',
+    'apps.help',
 ]
 
 MIDDLEWARE = [
@@ -183,6 +184,7 @@ SESSION_CACHE_ALIAS = 'default'
 N8N_API_URL = os.environ.get('N8N_API_URL', 'http://n8n:5678')
 N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET', '')
 N8N_API_KEY = os.environ.get('N8N_API_KEY', '')
+N8N_HELP_WEBHOOK_URL = os.environ.get('N8N_HELP_WEBHOOK_URL', '')  # Webhook URL for help requests
 
 # Phone Verification Settings (Twilio)
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
@@ -241,6 +243,7 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Automation', 'description': 'n8n workflow automation endpoints'},
         {'name': 'Verification', 'description': 'Phone number verification endpoints'},
         {'name': 'FAQ', 'description': 'Frequently asked questions endpoints'},
+        {'name': 'Help', 'description': 'Help and support request endpoints'},
     ],
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
