@@ -9,7 +9,8 @@ from .views import (
     user_profile,
     change_password,
     update_phone_number,
-    update_profile
+    update_profile,
+    logout
 )
 from .password_reset.views import password_reset_request, password_reset_confirm
 
@@ -18,6 +19,7 @@ app_name = 'accounts'
 urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('logout/', logout, name='logout'),
     path('register/user/', register_user, name='register_user'),
     path('register/courier/', register_courier, name='register_courier'),
     path('profile/', user_profile, name='user_profile'),

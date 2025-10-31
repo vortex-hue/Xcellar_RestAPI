@@ -3,6 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
@@ -579,6 +581,140 @@ def update_profile(request):
         logger.error(f"Failed to update profile for user {user.email}: {e}")
         return Response(
             {'error': 'Failed to update profile. Please try again.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@extend_schema(
+    tags=['Authentication'],
+    summary='Logout',
+    description='Logout user by blacklisting the refresh token. The access token will expire naturally. All refresh tokens associated with the user can be optionally blacklisted.',
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'refresh': {
+                    'type': 'string',
+                    'description': 'Refresh token to blacklist (optional - if not provided, blacklists all tokens for user)',
+                    'example': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                },
+                'blacklist_all': {
+                    'type': 'boolean',
+                    'description': 'If true, blacklists all refresh tokens for the user (default: false)',
+                    'example': False,
+                },
+            },
+        }
+    },
+    responses={
+        200: {
+            'description': 'Logout successful',
+            'examples': {
+                'application/json': {
+                    'message': 'Successfully logged out',
+                    'tokens_blacklisted': 1,
+                }
+            }
+        },
+        400: {'description': 'Invalid refresh token format'},
+        401: {'description': 'Authentication required - provide valid JWT token'},
+        429: {'description': 'Rate limit exceeded'},
+    },
+    examples=[
+        OpenApiExample(
+            'Logout Request (with refresh token)',
+            value={
+                'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Logout Request (blacklist all tokens)',
+            value={
+                'blacklist_all': True,
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Logout Response',
+            value={
+                'message': 'Successfully logged out',
+                'tokens_blacklisted': 1,
+            },
+            response_only=True,
+        ),
+    ],
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@ratelimit(key='user', rate='10/h', method='POST')
+def logout(request):
+    """
+    Logout user by blacklisting refresh token(s).
+    POST /api/v1/auth/logout/
+    
+    Can blacklist:
+    - Specific refresh token (if provided)
+    - All refresh tokens for the user (if blacklist_all=True)
+    """
+    try:
+        refresh_token = request.data.get('refresh', '').strip()
+        blacklist_all = request.data.get('blacklist_all', False)
+        
+        tokens_blacklisted = 0
+        
+        with transaction.atomic():
+            if blacklist_all:
+                # Blacklist all outstanding tokens for this user (ignore refresh token if provided)
+                outstanding_tokens = OutstandingToken.objects.filter(user=request.user)
+                for token in outstanding_tokens:
+                    # Check if already blacklisted
+                    if not BlacklistedToken.objects.filter(token=token).exists():
+                        BlacklistedToken.objects.create(token=token)
+                        tokens_blacklisted += 1
+                
+                logger.info(f"Blacklisted all tokens ({tokens_blacklisted}) for user {request.user.email}")
+            elif refresh_token:
+                # Blacklist specific refresh token
+                try:
+                    token = RefreshToken(refresh_token)
+                    # Verify token belongs to authenticated user
+                    if token.get('user_id') != request.user.id:
+                        return Response(
+                            {'error': 'Refresh token does not belong to authenticated user.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    token.blacklist()
+                    tokens_blacklisted = 1
+                    logger.info(f"Blacklisted refresh token for user {request.user.email}")
+                except Exception as e:
+                    logger.warning(f"Failed to blacklist token for user {request.user.email}: {e}")
+                    return Response(
+                        {'error': 'Invalid refresh token provided.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # No refresh token provided and blacklist_all=False
+                # Blacklist all tokens for the user as fallback
+                outstanding_tokens = OutstandingToken.objects.filter(user=request.user)
+                for token in outstanding_tokens:
+                    if not BlacklistedToken.objects.filter(token=token).exists():
+                        BlacklistedToken.objects.create(token=token)
+                        tokens_blacklisted += 1
+                
+                logger.info(f"Blacklisted all tokens ({tokens_blacklisted}) for user {request.user.email} (no refresh token provided)")
+        
+        return Response(
+            {
+                'message': 'Successfully logged out',
+                'tokens_blacklisted': tokens_blacklisted,
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        logger.error(f"Failed to logout user {request.user.email}: {e}")
+        return Response(
+            {'error': 'Failed to logout. Please try again.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 

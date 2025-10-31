@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_extensions',
     'drf_spectacular',
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
     'apps.couriers',
     'apps.automation',
     'apps.verification',
+    'apps.faq',
 ]
 
 MIDDLEWARE = [
@@ -238,6 +240,7 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Couriers', 'description': 'Courier/driver endpoints'},
         {'name': 'Automation', 'description': 'n8n workflow automation endpoints'},
         {'name': 'Verification', 'description': 'Phone number verification endpoints'},
+        {'name': 'FAQ', 'description': 'Frequently asked questions endpoints'},
     ],
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
