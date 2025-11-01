@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from decimal import Decimal
 
 from apps.core.models import AbstractBaseModel
 
@@ -112,6 +113,12 @@ class UserProfile(AbstractBaseModel):
         validators=[validate_image_file],
         help_text='User profile image'
     )
+    balance = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text='Available balance (always rounded to 2 decimal places)'
+    )
     # Add more customer-specific fields as needed
 
     class Meta:
@@ -145,6 +152,12 @@ class CourierProfile(AbstractBaseModel):
         null=True,
         validators=[validate_image_file],
         help_text='Courier profile image'
+    )
+    balance = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text='Available balance (always rounded to 2 decimal places)'
     )
     # Add more courier-specific fields as needed
 

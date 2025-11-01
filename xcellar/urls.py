@@ -20,6 +20,8 @@ urlpatterns = [
     path('api/v1/verification/', include('apps.verification.urls')),
     path('api/v1/faq/', include('apps.faq.urls')),
     path('api/v1/help/', include('apps.help.urls')),
+    path('api/v1/payments/', include('apps.payments.urls')),
+    path('api/v1/core/', include('apps.core.urls')),
     
     # Password reset web pages
     path('reset-password/', include('apps.accounts.password_reset.urls')),

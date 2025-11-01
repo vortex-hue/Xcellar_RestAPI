@@ -2,10 +2,20 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Load environment variables from .env file
+# Only load if not running in Docker (Docker Compose handles env_file)
+# Check if we're in Docker by looking for common Docker environment variables
+is_docker = os.environ.get('DOCKER_CONTAINER') == 'true' or os.path.exists('/.dockerenv')
+if not is_docker:
+    env_path = BASE_DIR / '.env'
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path)
+    else:
+        # Try default location
+        load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
@@ -36,6 +46,7 @@ INSTALLED_APPS = [
     'apps.verification',
     'apps.faq',
     'apps.help',
+    'apps.payments',
 ]
 
 MIDDLEWARE = [
@@ -154,11 +165,7 @@ SIMPLE_JWT = {
 SIMPLE_JWT['TOKEN_OBTAIN_SERIALIZER'] = 'apps.accounts.serializers.CustomTokenObtainPairSerializer'
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://localhost:3001'
-).split(',')
-
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Rate Limiting
@@ -185,6 +192,12 @@ N8N_API_URL = os.environ.get('N8N_API_URL', 'http://n8n:5678')
 N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET', '')
 N8N_API_KEY = os.environ.get('N8N_API_KEY', '')
 N8N_HELP_WEBHOOK_URL = os.environ.get('N8N_HELP_WEBHOOK_URL', '')  # Webhook URL for help requests
+
+# Paystack Settings
+# Get from environment (loaded by Docker Compose via env_file or dotenv for local)
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', '').strip()
+PAYSTACK_PUBLIC_KEY = os.environ.get('PAYSTACK_PUBLIC_KEY', '').strip()
+PAYSTACK_WEBHOOK_SECRET = os.environ.get('PAYSTACK_WEBHOOK_SECRET', '').strip()
 
 # Phone Verification Settings (Twilio)
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
@@ -244,6 +257,8 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Verification', 'description': 'Phone number verification endpoints'},
         {'name': 'FAQ', 'description': 'Frequently asked questions endpoints'},
         {'name': 'Help', 'description': 'Help and support request endpoints'},
+        {'name': 'Payments', 'description': 'Payment and transaction endpoints'},
+        {'name': 'Core', 'description': 'Core service endpoints'},
     ],
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
