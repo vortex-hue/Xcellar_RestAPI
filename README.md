@@ -215,12 +215,3 @@ Key variables:
 5. Set up SSL/TLS certificates
 6. Update n8n credentials
 7. Configure proper CORS origins
-
-## License
-
-[Your License Here]
-
-## Contributing
-
-[Your Contributing Guidelines Here]
-
