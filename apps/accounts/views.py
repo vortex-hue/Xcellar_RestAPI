@@ -131,7 +131,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 @extend_schema(
     tags=['Authentication'],
     summary='Register User',
-    description='Register a new regular customer account. After registration, use the login endpoint to obtain JWT tokens.',
+    description='Register a new regular customer account. JWT tokens are automatically generated and included in the response.',
     request=UserRegistrationSerializer,
     responses={
         201: {
@@ -146,6 +146,10 @@ class CustomTokenRefreshView(TokenRefreshView):
                         'user_type': 'USER',
                         'date_joined': '2025-10-30T18:00:00Z',
                         'full_name': 'John Doe',
+                    },
+                    'tokens': {
+                        'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                        'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
                     }
                 }
             }
@@ -178,10 +182,20 @@ def register_user(request):
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+        
         return Response(
             {
                 'message': 'User registered successfully',
-                'user': UserSerializer(user).data
+                'user': UserSerializer(user, context={'request': request}).data,
+                'tokens': {
+                    'access': access_token,
+                    'refresh': refresh_token
+                }
             },
             status=status.HTTP_201_CREATED
         )
@@ -191,7 +205,7 @@ def register_user(request):
 @extend_schema(
     tags=['Authentication'],
     summary='Register Courier',
-    description='Register a new courier/driver account. After registration, use the login endpoint to obtain JWT tokens.',
+    description='Register a new courier/driver account. JWT tokens are automatically generated and included in the response.',
     request=CourierRegistrationSerializer,
     responses={
         201: {
@@ -206,6 +220,10 @@ def register_user(request):
                         'user_type': 'COURIER',
                         'date_joined': '2025-10-30T18:00:00Z',
                         'full_name': 'Jane Driver',
+                    },
+                    'tokens': {
+                        'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                        'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
                     }
                 }
             }
@@ -238,10 +256,20 @@ def register_courier(request):
     serializer = CourierRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+        
         return Response(
             {
                 'message': 'Courier registered successfully',
-                'user': UserSerializer(user).data
+                'user': UserSerializer(user, context={'request': request}).data,
+                'tokens': {
+                    'access': access_token,
+                    'refresh': refresh_token
+                }
             },
             status=status.HTTP_201_CREATED
         )

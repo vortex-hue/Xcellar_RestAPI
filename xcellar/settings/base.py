@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'apps.faq',
     'apps.help',
     'apps.payments',
+    'apps.orders',
+    'apps.marketplace',
     'django_celery_beat',  # Celery Beat scheduler
 ]
 
@@ -289,6 +291,8 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Help', 'description': 'Help and support request endpoints'},
         {'name': 'Payments', 'description': 'Payment and transaction endpoints'},
         {'name': 'Core', 'description': 'Core service endpoints'},
+        {'name': 'Orders', 'description': 'Parcel delivery and order management endpoints'},
+        {'name': 'Marketplace', 'description': 'Product marketplace and shopping endpoints'},
     ],
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
