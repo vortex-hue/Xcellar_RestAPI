@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     # Status fields for USER type
     isAddressSet = serializers.SerializerMethodField()
     
-    # Status fields for COURIER type
+    # Status fields for COURIER type (only returned for couriers)
     isDeliveryOptionSet = serializers.SerializerMethodField()
     isPaymentInfoSet = serializers.SerializerMethodField()
     isBvnSet = serializers.SerializerMethodField()
@@ -33,6 +33,23 @@ class UserSerializer(serializers.ModelSerializer):
             'isBvnSet', 'isApproved'
         ]
         read_only_fields = ['id', 'email', 'phone_number', 'user_type', 'date_joined']
+    
+    def to_representation(self, instance):
+        """Customize representation to exclude type-specific fields"""
+        data = super().to_representation(instance)
+        
+        # Remove courier-specific fields for regular users
+        if instance.user_type != 'COURIER':
+            data.pop('isDeliveryOptionSet', None)
+            data.pop('isPaymentInfoSet', None)
+            data.pop('isBvnSet', None)
+            data.pop('isApproved', None)
+        
+        # Remove user-specific fields for couriers
+        if instance.user_type != 'USER':
+            data.pop('isAddressSet', None)
+        
+        return data
     
     def get_full_name(self, obj):
         """Get full name from profile"""
