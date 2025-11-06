@@ -21,7 +21,9 @@ from .serializers import (
     PhoneNumberUpdateSerializer,
     ProfileUpdateSerializer
 )
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -81,6 +83,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                         'user_type': 'USER',
                         'date_joined': '2025-10-30T18:00:00Z',
                         'full_name': 'John Doe',
+                        'isAddressSet': False,
                     },
                     'tokens': {
                         'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
@@ -100,6 +103,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         
         # Get user from serializer (available after validation)
         user = serializer.user
+        
+        # Optimize queries by prefetching/selecting related objects
+        if user.user_type == 'USER':
+            # Select user_profile for regular users (OneToOne relationship)
+            user = User.objects.select_related('user_profile').get(pk=user.pk)
+        elif user.user_type == 'COURIER':
+            # Select courier_profile (OneToOne) and prefetch vehicles (ForeignKey) for couriers
+            user = User.objects.select_related('courier_profile').prefetch_related('vehicles').get(pk=user.pk)
         
         # Call parent to get token response
         response = super().post(request, *args, **kwargs)
@@ -189,6 +200,7 @@ class CustomTokenRefreshView(TokenRefreshView):
                         'user_type': 'USER',
                         'date_joined': '2025-10-30T18:00:00Z',
                         'full_name': 'John Doe',
+                        'isAddressSet': False,
                     },
                     'tokens': {
                         'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
@@ -263,6 +275,10 @@ def register_user(request):
                         'user_type': 'COURIER',
                         'date_joined': '2025-10-30T18:00:00Z',
                         'full_name': 'Jane Driver',
+                        'isDeliveryOptionSet': False,
+                        'isPaymentInfoSet': False,
+                        'isBvnSet': False,
+                        'isApproved': False,
                     },
                     'tokens': {
                         'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',

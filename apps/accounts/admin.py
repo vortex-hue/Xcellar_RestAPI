@@ -77,10 +77,10 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(CourierProfile)
 class CourierProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'full_name', 'balance', 'is_available', 'has_address', 'has_profile_image', 'is_active', 'created_at']
-    search_fields = ['full_name', 'user__email', 'address', 'license_number']
-    list_filter = ['is_available', 'is_active', 'created_at']
-    readonly_fields = ['created_at', 'updated_at']
+    list_display = ['user', 'full_name', 'balance', 'approval_status', 'is_available', 'has_address', 'has_profile_image', 'is_active', 'created_at']
+    search_fields = ['full_name', 'user__email', 'address', 'license_number', 'bvn', 'bank_account_number']
+    list_filter = ['approval_status', 'is_available', 'is_active', 'created_at']
+    readonly_fields = ['created_at', 'updated_at', 'approved_at']
     ordering = ['-created_at']
     
     fieldsets = (
@@ -93,6 +93,14 @@ class CourierProfileAdmin(admin.ModelAdmin):
         ('Vehicle Information', {
             'fields': ('vehicle_type', 'vehicle_registration'),
             'classes': ('collapse',)
+        }),
+        ('Bank Information', {
+            'fields': ('bvn', 'bank_account_number', 'bank_code', 'bank_name', 'account_name'),
+            'description': 'Bank account details for payment processing'
+        }),
+        ('Approval Status', {
+            'fields': ('approval_status', 'approval_notes', 'approved_by', 'approved_at'),
+            'description': 'Courier approval and review status'
         }),
         ('Financial', {
             'fields': ('balance',),
@@ -113,7 +121,7 @@ class CourierProfileAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimize queryset"""
         qs = super().get_queryset(request)
-        return qs.select_related('user')
+        return qs.select_related('user', 'approved_by')
     
     def has_address(self, obj):
         """Check if profile has address"""

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from decimal import Decimal
@@ -134,6 +135,13 @@ class CourierProfile(AbstractBaseModel):
     """
     Profile for couriers/drivers.
     """
+    APPROVAL_STATUS_CHOICES = [
+        ('PENDING', 'Pending Review'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+        ('SUSPENDED', 'Suspended'),
+    ]
+    
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -159,7 +167,67 @@ class CourierProfile(AbstractBaseModel):
         default=Decimal('0.00'),
         help_text='Available balance (always rounded to 2 decimal places)'
     )
-    # Add more courier-specific fields as needed
+    
+    # Bank Verification Number
+    bvn = models.CharField(
+        max_length=11,
+        blank=True,
+        null=True,
+        help_text='Bank Verification Number (11 digits)'
+    )
+    
+    # Bank Account Information
+    bank_account_number = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text='Bank account number'
+    )
+    bank_code = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text='Bank code (e.g., from Paystack)'
+    )
+    bank_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text='Bank name'
+    )
+    account_name = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text='Account holder name'
+    )
+    
+    # Approval Status
+    approval_status = models.CharField(
+        max_length=20,
+        choices=APPROVAL_STATUS_CHOICES,
+        default='PENDING',
+        help_text='Courier approval status for operations'
+    )
+    approval_notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Notes from admin regarding approval/rejection'
+    )
+    approved_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text='Date and time when courier was approved'
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='approved_couriers',
+        help_text='Admin user who approved the courier',
+        limit_choices_to={'is_staff': True}
+    )
 
     class Meta:
         db_table = 'courier_profiles'

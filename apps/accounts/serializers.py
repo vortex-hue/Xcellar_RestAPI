@@ -15,11 +15,22 @@ class UserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
     profile_image_url = serializers.SerializerMethodField()
     
+    # Status fields for USER type
+    isAddressSet = serializers.SerializerMethodField()
+    
+    # Status fields for COURIER type
+    isDeliveryOptionSet = serializers.SerializerMethodField()
+    isPaymentInfoSet = serializers.SerializerMethodField()
+    isBvnSet = serializers.SerializerMethodField()
+    isApproved = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = [
             'id', 'email', 'phone_number', 'user_type', 'date_joined', 
-            'full_name', 'address', 'profile_image', 'profile_image_url'
+            'full_name', 'address', 'profile_image', 'profile_image_url',
+            'isAddressSet', 'isDeliveryOptionSet', 'isPaymentInfoSet', 
+            'isBvnSet', 'isApproved'
         ]
         read_only_fields = ['id', 'email', 'phone_number', 'user_type', 'date_joined']
     
@@ -51,6 +62,44 @@ class UserSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(profile_image)
             return profile_image
+        return None
+    
+    def get_isAddressSet(self, obj):
+        """Check if user has set their address"""
+        if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
+            address = obj.user_profile.address
+            return bool(address and address.strip())
+        return None
+    
+    def get_isDeliveryOptionSet(self, obj):
+        """Check if courier has delivery options configured (at least one vehicle)"""
+        if obj.user_type == 'COURIER':
+            # Check if courier has at least one active vehicle
+            return obj.vehicles.filter(is_active=True).exists()
+        return None
+    
+    def get_isPaymentInfoSet(self, obj):
+        """Check if courier has payment/bank account information set"""
+        if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
+            profile = obj.courier_profile
+            return bool(
+                profile.bank_account_number and profile.bank_account_number.strip() and
+                profile.bank_code and profile.bank_code.strip() and
+                profile.account_name and profile.account_name.strip()
+            )
+        return None
+    
+    def get_isBvnSet(self, obj):
+        """Check if courier has BVN set"""
+        if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
+            bvn = obj.courier_profile.bvn
+            return bool(bvn and bvn.strip())
+        return None
+    
+    def get_isApproved(self, obj):
+        """Check if courier is approved"""
+        if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
+            return obj.courier_profile.approval_status == 'APPROVED'
         return None
 
 
