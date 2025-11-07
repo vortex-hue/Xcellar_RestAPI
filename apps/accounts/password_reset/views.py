@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -14,6 +13,7 @@ import logging
 from .models import PasswordResetToken
 from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from .services import send_password_reset_email
+from apps.core.response import success_response, error_response, validation_error_response
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -49,13 +49,20 @@ logger = logging.getLogger(__name__)
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@ratelimit(key='ip', rate='5/h', method='POST')
-@ratelimit(key='post:email', rate='3/h', method='POST')
+@ratelimit(key='ip', rate='5/h', method='POST', block=False)
+@ratelimit(key='post:email', rate='3/h', method='POST', block=False)
 def password_reset_request(request):
     """
     Request password reset email.
     POST /api/v1/auth/password/reset/request/
     """
+    if getattr(request, 'limited', False):
+        retry_after_minutes = 12
+        return error_response(
+            f'Too many password reset requests. Please wait {retry_after_minutes} minutes before trying again.',
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
     serializer = PasswordResetRequestSerializer(data=request.data)
     if not serializer.is_valid():
         return validation_error_response(serializer.errors, message='Validation error')
@@ -134,12 +141,19 @@ def password_reset_request(request):
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@ratelimit(key='ip', rate='10/h', method='POST')
+@ratelimit(key='ip', rate='10/h', method='POST', block=False)
 def password_reset_confirm(request):
     """
     Confirm password reset with token.
     POST /api/v1/auth/password/reset/confirm/
     """
+    if getattr(request, 'limited', False):
+        retry_after_minutes = 10
+        return error_response(
+            f'Too many password reset attempts. Please wait {retry_after_minutes} minutes before trying again.',
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
     serializer = PasswordResetConfirmSerializer(data=request.data)
     if not serializer.is_valid():
         return validation_error_response(serializer.errors, message='Validation error')
