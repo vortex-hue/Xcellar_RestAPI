@@ -86,7 +86,11 @@ def send_otp(request):
     success, message, verification_sid = twilio_service.send_otp(phone_number, method)
     
     if not success:
-        return error_response(message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Check if it's a client error (invalid phone number, etc.) or server error
+        if 'Invalid parameter' in message or 'invalid' in message.lower():
+            return error_response(message, status_code=status.HTTP_400_BAD_REQUEST)
+        else:
+            return error_response(message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     # Create verification record for tracking (Twilio handles the actual code)
     PhoneVerification.objects.create(
