@@ -3,7 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from apps.core.response import success_response, error_response, created_response, validation_error_response, not_found_response
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from django.db import transaction as db_transaction
 from decimal import Decimal
 import logging
@@ -121,13 +122,59 @@ def get_cart(request):
 @extend_schema(
     tags=['Marketplace'],
     summary='Add to Cart',
-    description='Add product to shopping cart',
-    responses={200: CartSerializer}
+    description='Add product to shopping cart by providing product_id and optional quantity',
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'product_id': {
+                    'type': 'integer',
+                    'description': 'Product ID to add to cart',
+                    'example': 1
+                },
+                'quantity': {
+                    'type': 'integer',
+                    'description': 'Quantity to add (defaults to 1)',
+                    'example': 1,
+                    'default': 1
+                }
+            },
+            'required': ['product_id']
+        }
+    },
+    responses={
+        200: {
+            'description': 'Item added to cart successfully',
+            'examples': {
+                'application/json': {
+                    'status': 200,
+                    'message': 'Item added to cart successfully',
+                    'cart': {
+                        'id': 1,
+                        'total_items': 1,
+                        'total_amount': '5000.00',
+                        'items': []
+                    }
+                }
+            }
+        },
+        400: {'description': 'Validation error'},
+        401: {'description': 'Authentication required'},
+    },
+    examples=[
+        OpenApiExample(
+            'Add to Cart Request',
+            value={
+                'product_id': 1,
+                'quantity': 1
+            },
+            request_only=True,
+        ),
+    ],
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsUser])
 def add_to_cart(request):
-    """Add product to cart"""
     cart, _ = Cart.objects.get_or_create(user=request.user)
     serializer = CartItemSerializer(data=request.data, context={'cart': cart})
     
