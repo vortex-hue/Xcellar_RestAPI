@@ -28,68 +28,9 @@ from apps.payments.serializers import (
 )
 from apps.payments.services.paystack_client import PaystackClient
 from apps.core.services.paystack_account_verification import PaystackAccountVerification
+from apps.core.utils import get_user_balance, deduct_balance, add_balance
 
 logger = logging.getLogger(__name__)
-
-
-def get_user_profile(user):
-    """Get user profile (UserProfile or CourierProfile)"""
-    if user.user_type == 'USER':
-        return user.user_profile
-    elif user.user_type == 'COURIER':
-        return user.courier_profile
-    return None
-
-
-def get_user_balance(user):
-    """Get user balance"""
-    profile = get_user_profile(user)
-    return profile.balance if profile else Decimal('0.00')
-
-
-def deduct_balance(user, amount, reference):
-    """Deduct balance atomically"""
-    profile = get_user_profile(user)
-    if not profile:
-        logger.error(f"Profile not found for user {user.email}")
-        return False
-    
-    # Check sufficient balance (read from DB to avoid race condition)
-    profile.refresh_from_db()
-    if profile.balance < amount:
-        logger.warning(f"Insufficient balance for {user.email}: {profile.balance} < {amount}")
-        return False
-    
-    # Atomic deduction using F() expression
-    updated = profile.__class__.objects.filter(
-        pk=profile.pk,
-        balance__gte=amount  # Double-check balance in update
-    ).update(
-        balance=F('balance') - Decimal(str(amount)).quantize(Decimal('0.01'))
-    )
-    
-    if updated == 0:
-        logger.warning(f"Balance deduction failed for {user.email}: insufficient balance")
-        return False
-    
-    profile.refresh_from_db()
-    logger.info(f"Balance deducted for {user.email}: -₦{amount:,.2f} (Reference: {reference})")
-    return True
-
-
-def add_balance(user, amount, reference):
-    """Add balance atomically"""
-    profile = get_user_profile(user)
-    if not profile:
-        return False
-    
-    # Atomic addition
-    profile.__class__.objects.filter(pk=profile.pk).update(
-        balance=F('balance') + Decimal(str(amount)).quantize(Decimal('0.01'))
-    )
-    profile.refresh_from_db()
-    logger.info(f"Balance added for {user.email}: +₦{amount:,.2f} (Reference: {reference})")
-    return True
 
 
 @extend_schema(
