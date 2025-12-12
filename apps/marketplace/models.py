@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator
+from django.utils.text import slugify
 from decimal import Decimal
 from apps.core.models import AbstractBaseModel
 
@@ -22,6 +23,11 @@ class Category(AbstractBaseModel):
     
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class Store(AbstractBaseModel):
@@ -49,6 +55,11 @@ class Store(AbstractBaseModel):
     
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class Product(AbstractBaseModel):
@@ -65,7 +76,8 @@ class Product(AbstractBaseModel):
     compare_at_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     sku = models.CharField(max_length=100, unique=True, db_index=True)
     stock_quantity = models.PositiveIntegerField(default=0)
-    images = models.JSONField(default=list, blank=True)  # Store product image URLs
+    primary_image = models.ImageField(upload_to='marketplace/products/', null=True, blank=True)
+    images = models.JSONField(default=list, blank=True)
     weight_kg = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'))
     dimensions = models.CharField(max_length=100, blank=True)  # e.g., "30x20x15 cm"
     is_available = models.BooleanField(default=True)
@@ -92,6 +104,8 @@ class Product(AbstractBaseModel):
         if not self.sku:
             import uuid
             self.sku = f"PRD-{uuid.uuid4().hex[:10].upper()}"
+        if not self.slug:
+            self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
 

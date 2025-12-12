@@ -8,6 +8,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ['is_featured', 'is_active']
     search_fields = ['name', 'slug']
     readonly_fields = ['created_at', 'updated_at']
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Store)
@@ -16,6 +17,7 @@ class StoreAdmin(admin.ModelAdmin):
     list_filter = ['is_verified', 'is_active']
     search_fields = ['name', 'owner_name', 'email']
     readonly_fields = ['created_at', 'updated_at']
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Product)
@@ -25,6 +27,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['category', 'store', 'is_available', 'is_featured']
     search_fields = ['name', 'sku', 'store__name']
     readonly_fields = ['sku', 'created_at', 'updated_at']
+    prepopulated_fields = {'slug': ('name',)}
     fieldsets = (
         ('Product Information', {
             'fields': ('name', 'slug', 'sku', 'description', 'short_description')
@@ -39,7 +42,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('stock_quantity', 'weight_kg', 'dimensions')
         }),
         ('Media', {
-            'fields': ('images',)
+            'fields': ('primary_image', 'images')
         }),
         ('Status', {
             'fields': ('is_available', 'is_featured', 'rating', 'total_sales')
