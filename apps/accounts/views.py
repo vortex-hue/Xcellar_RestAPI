@@ -231,7 +231,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@ratelimit(key='ip', rate='10/h', method='POST')
+@ratelimit(key='ip', rate='100/h', method='POST')
 def register_user(request):
     """
     Register a new regular customer.

@@ -50,7 +50,7 @@ class OrderListSerializer(serializers.ModelSerializer):
             'created_at', 'estimated_delivery_time',
         ]
     
-    def get_assigned_courier_name(self, obj):
+    def get_assigned_courier_name(self, obj) -> str:
         if obj.assigned_courier:
             return obj.assigned_courier.email
         return None
@@ -66,7 +66,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
     
-    def get_tracking_history(self, obj):
+    def get_tracking_history(self, obj) -> list:
         history = obj.tracking_history.all()[:10]  # Last 10 updates
         return TrackingHistorySerializer(history, many=True).data
 

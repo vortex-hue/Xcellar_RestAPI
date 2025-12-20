@@ -54,11 +54,38 @@ def create_order(request):
     tags=['Orders'],
     summary='Confirm Order',
     description='Confirm order and make it available to couriers',
+    request=None,
     responses={200: OrderDetailSerializer}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsUser])
 def confirm_order(request, order_id):
+
+# ... (skipping unchanged code)
+
+@extend_schema(
+    tags=['Couriers'],
+    summary='Accept Order',
+    description='Accept an order for delivery (atomic operation)',
+    request=None,
+    responses={200: OrderDetailSerializer}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsCourier])
+def accept_order(request, order_id):
+
+# ...
+
+@extend_schema(
+    tags=['Couriers'],
+    summary='Reject Order',
+    description='Reject an offered order',
+    request=None,
+    responses={200: {'message': 'Order rejected'}}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsCourier])
+def reject_order(request, order_id):
     """Confirm order and make it available to couriers"""
     try:
         order = Order.objects.get(id=order_id, sender=request.user)

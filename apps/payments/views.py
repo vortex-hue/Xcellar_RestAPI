@@ -253,6 +253,7 @@ def verify_payment(request):
     tags=['Payments'],
     summary='Create Dedicated Virtual Account',
     description='Create a dedicated virtual account (DVA) for the authenticated user using single-step assignment.',
+    request=None,
     responses={
         200: {
             'description': 'DVA created successfully',

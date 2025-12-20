@@ -10,6 +10,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView
 )
+from drf_spectacular.utils import extend_schema
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,6 +36,7 @@ urlpatterns = [
 ]
 
 
+@extend_schema(exclude=True)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
@@ -46,6 +49,7 @@ def health_check(request):
 
 urlpatterns += [
     path('health/', health_check, name='health_check'),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
 ]
 
 # Serve media files in development

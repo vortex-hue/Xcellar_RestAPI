@@ -54,11 +54,11 @@ class UserSerializer(serializers.ModelSerializer):
         
         return data
     
-    def get_full_name(self, obj):
+    def get_full_name(self, obj) -> str:
         """Get full name from profile"""
         return obj.get_full_name()
     
-    def get_address(self, obj):
+    def get_address(self, obj) -> str:
         """Get address from profile"""
         if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
             return obj.user_profile.address
@@ -66,7 +66,7 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.courier_profile.address
         return None
     
-    def get_profile_image(self, obj):
+    def get_profile_image(self, obj) -> str:
         """Get profile image path from profile"""
         if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
             return obj.user_profile.profile_image.url if obj.user_profile.profile_image else None
@@ -74,7 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.courier_profile.profile_image.url if obj.courier_profile.profile_image else None
         return None
     
-    def get_profile_image_url(self, obj):
+    def get_profile_image_url(self, obj) -> str:
         profile_image = self.get_profile_image(obj)
         if not profile_image:
             return None
@@ -84,21 +84,21 @@ class UserSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(profile_image)
         return profile_image
     
-    def get_isAddressSet(self, obj):
+    def get_isAddressSet(self, obj) -> bool:
         """Check if user has set their address"""
         if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
             address = obj.user_profile.address
             return bool(address and address.strip())
         return None
     
-    def get_isDeliveryOptionSet(self, obj):
+    def get_isDeliveryOptionSet(self, obj) -> bool:
         """Check if courier has delivery options configured (at least one vehicle)"""
         if obj.user_type == 'COURIER':
             # Check if courier has at least one active vehicle
             return obj.vehicles.filter(is_active=True).exists()
         return None
     
-    def get_isPaymentInfoSet(self, obj):
+    def get_isPaymentInfoSet(self, obj) -> bool:
         """Check if courier has payment/bank account information set"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             profile = obj.courier_profile
@@ -109,20 +109,20 @@ class UserSerializer(serializers.ModelSerializer):
             )
         return None
     
-    def get_isBvnSet(self, obj):
+    def get_isBvnSet(self, obj) -> bool:
         """Check if courier has BVN set"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             bvn = obj.courier_profile.bvn
             return bool(bvn and bvn.strip())
         return None
     
-    def get_isApproved(self, obj):
+    def get_isApproved(self, obj) -> bool:
         """Check if courier is approved"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             return obj.courier_profile.approval_status == 'APPROVED'
         return None
     
-    def get_isDriverLicenseSet(self, obj):
+    def get_isDriverLicenseSet(self, obj) -> bool:
         """Check if courier has driver license added"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             try:

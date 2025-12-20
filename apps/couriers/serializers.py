@@ -40,15 +40,15 @@ class VehicleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'courier', 'created_at', 'updated_at']
     
-    def get_registration_proof_url(self, obj):
+    def get_registration_proof_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.registration_proof, request)
     
-    def get_insurance_policy_proof_url(self, obj):
+    def get_insurance_policy_proof_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.insurance_policy_proof, request)
     
-    def get_road_worthiness_proof_url(self, obj):
+    def get_road_worthiness_proof_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.road_worthiness_proof, request)
     
@@ -164,23 +164,23 @@ class DriverLicenseSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'courier_profile', 'created_at', 'updated_at']
     
-    def get_front_page_url(self, obj):
+    def get_front_page_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.front_page, request)
     
-    def get_back_page_url(self, obj):
+    def get_back_page_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.back_page, request)
     
-    def get_vehicle_insurance_url(self, obj):
+    def get_vehicle_insurance_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.vehicle_insurance, request)
     
-    def get_vehicle_registration_url(self, obj):
+    def get_vehicle_registration_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.vehicle_registration, request)
     
-    def get_is_expired(self, obj):
+    def get_is_expired(self, obj) -> bool:
         """Get license expiry status"""
         return obj.is_expired()
     

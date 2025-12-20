@@ -10,7 +10,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'icon', 'icon_url', 'is_featured']
     
-    def get_icon_url(self, obj):
+    def get_icon_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.icon, request)
 
@@ -25,11 +25,11 @@ class StoreSerializer(serializers.ModelSerializer):
                   'cover_image', 'cover_image_url', 'address', 'phone_number', 'email',
                   'rating', 'total_sales', 'is_verified']
     
-    def get_logo_url(self, obj):
+    def get_logo_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.logo, request)
     
-    def get_cover_image_url(self, obj):
+    def get_cover_image_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.cover_image, request)
 
@@ -46,7 +46,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   'stock_quantity', 'primary_image', 'primary_image_url', 'images',
                   'weight_kg', 'dimensions', 'is_available', 'is_featured', 'rating', 'total_sales']
     
-    def get_primary_image_url(self, obj):
+    def get_primary_image_url(self, obj) -> str:
         request = self.context.get('request')
         return build_file_url(obj.primary_image, request)
 
