@@ -284,11 +284,16 @@ def available_orders(request):
         assigned_courier__isnull=True
     )[:100]  # Limit to 100 for performance
     
-    # Filter orders where courier_id is in the offered_to_couriers list
-    available_orders_list = [
-        order for order in all_orders 
-        if courier_id in (order.offered_to_couriers or [])
-    ]
+    # Filter orders where:
+    # 1. offered_to_couriers is empty (backward compatibility - show to all couriers), OR
+    # 2. courier_id is in the offered_to_couriers list (specific assignment)
+    available_orders_list = []
+    for order in all_orders:
+        offered_list = order.offered_to_couriers or []
+        # If offered_to_couriers is empty, show to all couriers
+        # Otherwise, only show if courier is in the list
+        if not offered_list or courier_id in offered_list:
+            available_orders_list.append(order)
     
     serializer = OrderListSerializer(available_orders_list, many=True)
     return success_response(data={'orders': serializer.data})
