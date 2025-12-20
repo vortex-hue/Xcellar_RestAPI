@@ -95,7 +95,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             ),
         ],
     )
-    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST'))
+    @method_decorator(ratelimit(key='ip', rate='20/m', method='POST'))
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         

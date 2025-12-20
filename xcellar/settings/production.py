@@ -8,6 +8,7 @@ INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'debug_toolbar']
 # CRITICAL: Redefine MIDDLEWARE immediately to ensure debug_toolbar is never included
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'xcellar.middleware.ProxyMiddleware',  # Add ProxyMiddleware here
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -16,6 +17,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Trust the X-Forwarded-Proto header for SSL
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
