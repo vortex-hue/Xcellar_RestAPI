@@ -15,5 +15,11 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "Starting server..."
-exec "$@"
+if [ "$#" -eq 0 ]; then
+    PORT=${PORT:-8000}
+    WORKERS=${WEB_CONCURRENCY:-4}
+    exec gunicorn --bind "0.0.0.0:${PORT}" --workers "${WORKERS}" --timeout 120 --access-logfile - --error-logfile - xcellar.wsgi:application
+else
+    exec "$@"
+fi
 

@@ -22,19 +22,24 @@ def wait_for_db():
         'database': os.environ.get('DB_NAME', 'postgres')
     }
     
+    ssl_mode = os.environ.get('DB_SSLMODE', os.environ.get('DB_SSL_MODE', 'prefer'))
+    if ssl_mode and ssl_mode != 'disable':
+        db_config['sslmode'] = ssl_mode
+    
     while attempt < max_attempts:
         try:
             conn = psycopg2.connect(**db_config)
             conn.close()
             print("Database is ready!")
             return True
-        except OperationalError:
+        except OperationalError as e:
             attempt += 1
-            print(f"Waiting for database... ({attempt}/{max_attempts})")
-            time.sleep(2)
-    
-    print("Database connection failed!")
-    sys.exit(1)
+            if attempt < max_attempts:
+                print(f"Waiting for database... ({attempt}/{max_attempts})")
+                time.sleep(2)
+            else:
+                print(f"Database connection failed after {max_attempts} attempts! Error: {e}")
+                sys.exit(1)
 
 if __name__ == '__main__':
     wait_for_db()

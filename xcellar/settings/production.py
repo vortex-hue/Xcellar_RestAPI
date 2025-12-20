@@ -5,6 +5,11 @@ DEBUG = False
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 # Database
+db_ssl_mode = os.environ.get('DB_SSLMODE', os.environ.get('DB_SSL_MODE', 'require'))
+db_options = {}
+if db_ssl_mode and db_ssl_mode != 'disable':
+    db_options['sslmode'] = db_ssl_mode
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -13,9 +18,7 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST'),
         'PORT': os.environ.get('DB_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+        'OPTIONS': db_options,
     }
 }
 
