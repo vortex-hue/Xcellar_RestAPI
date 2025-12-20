@@ -33,3 +33,16 @@ X_FRAME_OPTIONS = 'DENY'
 # Static files
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
+# Exclude debug_toolbar from static files collection
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+# Ensure debug_toolbar is not in INSTALLED_APPS
+if 'debug_toolbar' in INSTALLED_APPS:
+    INSTALLED_APPS.remove('debug_toolbar')
+
+# Ensure debug_toolbar middleware is not in MIDDLEWARE
+MIDDLEWARE = [m for m in MIDDLEWARE if 'debug_toolbar' not in m]
+

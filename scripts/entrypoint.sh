@@ -11,8 +11,11 @@ python manage.py makemigrations --noinput
 echo "Running migrations..."
 python manage.py migrate --noinput
 
+echo "Cleaning old static files..."
+rm -rf /app/staticfiles/*
+
 echo "Collecting static files..."
-python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput --clear
 
 echo "Starting server..."
 if [ "$#" -eq 0 ]; then
