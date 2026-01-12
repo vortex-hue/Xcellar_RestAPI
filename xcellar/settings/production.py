@@ -50,5 +50,5 @@ CELERY_RESULT_BACKEND = None
 CELERY_TASK_ALWAYS_EAGER = True  # Run tasks synchronously
 
 # Static files
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
