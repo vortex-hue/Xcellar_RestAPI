@@ -182,25 +182,12 @@ RATELIMIT_ENABLE = True
 RATELIMIT_USE_CACHE = 'default'
 
 # Redis Cache
-redis_host = os.environ.get('REDIS_HOST', 'redis')
-redis_port = os.environ.get('REDIS_PORT', '6379')
-redis_password = os.environ.get('REDIS_PASSWORD', '')
-redis_url = os.environ.get('REDIS_URL', '')
-
-if redis_url:
-    redis_location = redis_url
-elif redis_password:
-    redis_location = f"redis://:{redis_password}@{redis_host}:{redis_port}/1"
-else:
-    redis_location = f"redis://{redis_host}:{redis_port}/1"
-
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': redis_location,
+        'LOCATION': f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}/1",
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'IGNORE_EXCEPTIONS': True,
         }
     }
 }
@@ -211,15 +198,8 @@ SESSION_CACHE_ALIAS = 'default'
 
 
 # Celery Configuration
-if redis_url:
-    celery_redis_url = redis_url.rsplit('/', 1)[0] + '/0'
-elif redis_password:
-    celery_redis_url = f"redis://:{redis_password}@{redis_host}:{redis_port}/0"
-else:
-    celery_redis_url = f"redis://{redis_host}:{redis_port}/0"
-
-CELERY_BROKER_URL = celery_redis_url
-CELERY_RESULT_BACKEND = celery_redis_url
+CELERY_BROKER_URL = f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}/0"
+CELERY_RESULT_BACKEND = f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}/0"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

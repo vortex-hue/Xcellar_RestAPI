@@ -5,7 +5,6 @@ from apps.orders.views import (
     list_orders,
     order_detail,
     track_order,
-    track_by_number,
     available_orders,
     accept_order,
     reject_order,
@@ -16,9 +15,6 @@ from apps.orders.image_upload import upload_parcel_image
 app_name = 'orders'
 
 urlpatterns = [
-    # Public endpoints
-    path('track/', track_by_number, name='track_by_number'),
-    
     # User endpoints
     path('upload-image/', upload_parcel_image, name='upload_parcel_image'),
     path('create/', create_order, name='create_order'),

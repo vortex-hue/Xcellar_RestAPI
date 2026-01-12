@@ -20,16 +20,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_parcel_images(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("parcel_images must be an array of image URLs")
-        
         if len(value) > 5:
-            raise serializers.ValidationError(f"Maximum 5 images allowed. You provided {len(value)} images.")
-        
-        for url in value:
-            if not isinstance(url, str) or not url.startswith(('http://', 'https://')):
-                raise serializers.ValidationError("Each item in parcel_images must be a valid HTTP/HTTPS URL string")
-        
+            raise serializers.ValidationError("Maximum 5 images allowed")
         return value
 
 
@@ -50,7 +42,7 @@ class OrderListSerializer(serializers.ModelSerializer):
             'created_at', 'estimated_delivery_time',
         ]
     
-    def get_assigned_courier_name(self, obj) -> str:
+    def get_assigned_courier_name(self, obj):
         if obj.assigned_courier:
             return obj.assigned_courier.email
         return None
@@ -66,7 +58,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
     
-    def get_tracking_history(self, obj) -> list:
+    def get_tracking_history(self, obj):
         history = obj.tracking_history.all()[:10]  # Last 10 updates
         return TrackingHistorySerializer(history, many=True).data
 

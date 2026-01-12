@@ -3,7 +3,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from apps.core.utils import build_file_url
 import os
 
 User = get_user_model()
@@ -54,11 +53,11 @@ class UserSerializer(serializers.ModelSerializer):
         
         return data
     
-    def get_full_name(self, obj) -> str:
+    def get_full_name(self, obj):
         """Get full name from profile"""
         return obj.get_full_name()
     
-    def get_address(self, obj) -> str:
+    def get_address(self, obj):
         """Get address from profile"""
         if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
             return obj.user_profile.address
@@ -66,7 +65,7 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.courier_profile.address
         return None
     
-    def get_profile_image(self, obj) -> str:
+    def get_profile_image(self, obj):
         """Get profile image path from profile"""
         if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
             return obj.user_profile.profile_image.url if obj.user_profile.profile_image else None
@@ -74,31 +73,31 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.courier_profile.profile_image.url if obj.courier_profile.profile_image else None
         return None
     
-    def get_profile_image_url(self, obj) -> str:
+    def get_profile_image_url(self, obj):
+        """Get full URL for profile image"""
         profile_image = self.get_profile_image(obj)
-        if not profile_image:
-            return None
-        
-        request = self.context.get('request')
-        if request:
-            return request.build_absolute_uri(profile_image)
-        return profile_image
+        if profile_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(profile_image)
+            return profile_image
+        return None
     
-    def get_isAddressSet(self, obj) -> bool:
+    def get_isAddressSet(self, obj):
         """Check if user has set their address"""
         if obj.user_type == 'USER' and hasattr(obj, 'user_profile'):
             address = obj.user_profile.address
             return bool(address and address.strip())
         return None
     
-    def get_isDeliveryOptionSet(self, obj) -> bool:
+    def get_isDeliveryOptionSet(self, obj):
         """Check if courier has delivery options configured (at least one vehicle)"""
         if obj.user_type == 'COURIER':
             # Check if courier has at least one active vehicle
             return obj.vehicles.filter(is_active=True).exists()
         return None
     
-    def get_isPaymentInfoSet(self, obj) -> bool:
+    def get_isPaymentInfoSet(self, obj):
         """Check if courier has payment/bank account information set"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             profile = obj.courier_profile
@@ -109,20 +108,20 @@ class UserSerializer(serializers.ModelSerializer):
             )
         return None
     
-    def get_isBvnSet(self, obj) -> bool:
+    def get_isBvnSet(self, obj):
         """Check if courier has BVN set"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             bvn = obj.courier_profile.bvn
             return bool(bvn and bvn.strip())
         return None
     
-    def get_isApproved(self, obj) -> bool:
+    def get_isApproved(self, obj):
         """Check if courier is approved"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             return obj.courier_profile.approval_status == 'APPROVED'
         return None
     
-    def get_isDriverLicenseSet(self, obj) -> bool:
+    def get_isDriverLicenseSet(self, obj):
         """Check if courier has driver license added"""
         if obj.user_type == 'COURIER' and hasattr(obj, 'courier_profile'):
             try:

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Vehicle, DriverLicense
-from apps.core.utils import build_file_url
 from datetime import datetime
 import os
 
@@ -40,17 +39,32 @@ class VehicleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'courier', 'created_at', 'updated_at']
     
-    def get_registration_proof_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.registration_proof, request)
+    def get_registration_proof_url(self, obj):
+        """Get full URL for registration proof"""
+        if obj.registration_proof:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.registration_proof.url)
+            return obj.registration_proof.url
+        return None
     
-    def get_insurance_policy_proof_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.insurance_policy_proof, request)
+    def get_insurance_policy_proof_url(self, obj):
+        """Get full URL for insurance policy proof"""
+        if obj.insurance_policy_proof:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.insurance_policy_proof.url)
+            return obj.insurance_policy_proof.url
+        return None
     
-    def get_road_worthiness_proof_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.road_worthiness_proof, request)
+    def get_road_worthiness_proof_url(self, obj):
+        """Get full URL for road worthiness proof"""
+        if obj.road_worthiness_proof:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.road_worthiness_proof.url)
+            return obj.road_worthiness_proof.url
+        return None
     
     def validate_registration_proof(self, value):
         """Validate registration proof file"""
@@ -164,23 +178,43 @@ class DriverLicenseSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'courier_profile', 'created_at', 'updated_at']
     
-    def get_front_page_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.front_page, request)
+    def get_front_page_url(self, obj):
+        """Get full URL for front page"""
+        if obj.front_page:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.front_page.url)
+            return obj.front_page.url
+        return None
     
-    def get_back_page_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.back_page, request)
+    def get_back_page_url(self, obj):
+        """Get full URL for back page"""
+        if obj.back_page:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.back_page.url)
+            return obj.back_page.url
+        return None
     
-    def get_vehicle_insurance_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.vehicle_insurance, request)
+    def get_vehicle_insurance_url(self, obj):
+        """Get full URL for vehicle insurance"""
+        if obj.vehicle_insurance:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.vehicle_insurance.url)
+            return obj.vehicle_insurance.url
+        return None
     
-    def get_vehicle_registration_url(self, obj) -> str:
-        request = self.context.get('request')
-        return build_file_url(obj.vehicle_registration, request)
+    def get_vehicle_registration_url(self, obj):
+        """Get full URL for vehicle registration"""
+        if obj.vehicle_registration:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.vehicle_registration.url)
+            return obj.vehicle_registration.url
+        return None
     
-    def get_is_expired(self, obj) -> bool:
+    def get_is_expired(self, obj):
         """Get license expiry status"""
         return obj.is_expired()
     

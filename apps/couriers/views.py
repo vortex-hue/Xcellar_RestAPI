@@ -459,7 +459,6 @@ def update_driver_license(request):
                 'application/json': {
                     'message': 'Courier dashboard',
                     'courier': 'courier@example.com',
-                    'balance': '1500.00',
                 }
             }
         },
@@ -473,7 +472,6 @@ def update_driver_license(request):
             value={
                 'message': 'Courier dashboard',
                 'courier': 'courier@example.com',
-                'balance': '1500.00',
             },
             response_only=True,
         ),
@@ -486,16 +484,6 @@ def courier_dashboard(request):
     """
     Courier dashboard endpoint.
     GET /api/v1/couriers/dashboard/
-    Returns courier email and account balance.
     """
-    courier_profile = request.user.courier_profile
-    balance = str(courier_profile.balance) if courier_profile.balance else '0.00'
-    
-    return success_response(
-        data={
-            'courier': request.user.email,
-            'balance': balance,
-        },
-        message='Courier dashboard'
-    )
+    return success_response(data={'courier': request.user.email}, message='Courier dashboard')
 

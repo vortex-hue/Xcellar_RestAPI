@@ -1,9 +1,9 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from apps.core.response import success_response, error_response, created_response, validation_error_response, not_found_response
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from django.utils import timezone
 from django.db import transaction as db_transaction
 from django.db.models import Q
@@ -17,7 +17,6 @@ from apps.orders.serializers import (
     OrderDetailSerializer,
     TrackingHistorySerializer
 )
-from apps.orders.tracking_serializers import PublicTrackingSerializer, serialize_tracking_data
 from apps.core.permissions import IsUser, IsCourier
 from apps.accounts.models import User
 
@@ -54,13 +53,11 @@ def create_order(request):
     tags=['Orders'],
     summary='Confirm Order',
     description='Confirm order and make it available to couriers',
-    request=None,
     responses={200: OrderDetailSerializer}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsUser])
 def confirm_order(request, order_id):
-
     """Confirm order and make it available to couriers"""
     try:
         order = Order.objects.get(id=order_id, sender=request.user)
@@ -173,18 +170,20 @@ def order_detail(request, order_id):
 
 @extend_schema(
     tags=['Orders'],
-    summary='Track Order by ID',
-    description='Get tracking history for an order by order ID (authenticated users only)',
+    summary='Track Order',
+    description='Get tracking history for an order',
     responses={200: TrackingHistorySerializer}
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def track_order(request, order_id):
+    """Get tracking history for an order"""
     try:
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
         return not_found_response('Order not found. Please check the order ID and try again.')
     
+    # Check permission
     user = request.user
     if user.user_type == 'USER' and order.sender != user:
         return error_response('You do not have permission to access this order.', status_code=status.HTTP_403_FORBIDDEN)
@@ -194,77 +193,6 @@ def track_order(request, order_id):
     tracking = order.tracking_history.all()
     serializer = TrackingHistorySerializer(tracking, many=True)
     return success_response(data={'tracking_history': serializer.data})
-
-
-@extend_schema(
-    tags=['Orders'],
-    summary='Track Parcel by Tracking Number',
-    description='Public endpoint to track a parcel using its tracking number (e.g., TRK-5074E6E4C84F430C). No authentication required.',
-    parameters=[
-        OpenApiParameter(
-            name='tracking_number',
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description='Tracking number (e.g., TRK-5074E6E4C84F430C)',
-            required=True,
-        ),
-    ],
-    responses={
-        200: {
-            'description': 'Tracking information retrieved successfully',
-            'examples': {
-                'application/json': {
-                    'tracking_number': 'TRK-5074E6E4C84F430C',
-                    'pickup_address': '1234 Hilltop Street Nsk, IL 62701',
-                    'dropoff_address': '5678 Maple Avenue Seattle, WA 98101',
-                    'recipient_name': 'Chibuko Miracle Uchechukwu',
-                    'estimated_delivery': '20 Sept 2023',
-                    'current_status': 'DELIVERED',
-                    'current_status_display': 'Delivered',
-                    'timeline': [
-                        {
-                            'date': '20 Sept 2023',
-                            'status': 'DELIVERED',
-                            'status_display': 'Delivered',
-                            'icon': 'checkmark',
-                            'message': 'You parcel was delivered successfully by the delivery man',
-                            'location': None
-                        }
-                    ]
-                }
-            }
-        },
-        404: {
-            'description': 'Tracking number not found',
-            'examples': {
-                'application/json': {
-                    'status': 404,
-                    'error': 'Tracking number not found. Please check the number and try again.'
-                }
-            }
-        }
-    },
-)
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def track_by_number(request):
-    tracking_number = request.query_params.get('tracking_number', '').strip().upper()
-    
-    if not tracking_number:
-        return error_response('Tracking number is required. Please provide a tracking number in the format TRK-XXXXXXXXXXXX.', status_code=status.HTTP_400_BAD_REQUEST)
-    
-    if not tracking_number.startswith('TRK-'):
-        return error_response('Invalid tracking number format. Tracking numbers must start with TRK-.', status_code=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        order = Order.objects.get(tracking_number=tracking_number)
-    except Order.DoesNotExist:
-        return not_found_response('Tracking number not found. Please check the number and try again. It doesn\'t match any active deliveries.')
-    
-    tracking_data = serialize_tracking_data(order)
-    serializer = PublicTrackingSerializer(tracking_data)
-    
-    return success_response(data=serializer.data, message='Tracking information retrieved successfully')
 
 
 @extend_schema(
@@ -286,16 +214,11 @@ def available_orders(request):
         assigned_courier__isnull=True
     )[:100]  # Limit to 100 for performance
     
-    # Filter orders where:
-    # 1. offered_to_couriers is empty (backward compatibility - show to all couriers), OR
-    # 2. courier_id is in the offered_to_couriers list (specific assignment)
-    available_orders_list = []
-    for order in all_orders:
-        offered_list = order.offered_to_couriers or []
-        # If offered_to_couriers is empty, show to all couriers
-        # Otherwise, only show if courier is in the list
-        if not offered_list or courier_id in offered_list:
-            available_orders_list.append(order)
+    # Filter orders where courier_id is in the offered_to_couriers list
+    available_orders_list = [
+        order for order in all_orders 
+        if courier_id in (order.offered_to_couriers or [])
+    ]
     
     serializer = OrderListSerializer(available_orders_list, many=True)
     return success_response(data={'orders': serializer.data})
@@ -305,7 +228,6 @@ def available_orders(request):
     tags=['Couriers'],
     summary='Accept Order',
     description='Accept an order for delivery (atomic operation)',
-    request=None,
     responses={200: OrderDetailSerializer}
 )
 @api_view(['POST'])
@@ -350,7 +272,6 @@ def accept_order(request, order_id):
     tags=['Couriers'],
     summary='Reject Order',
     description='Reject an offered order',
-    request=None,
     responses={200: {'message': 'Order rejected'}}
 )
 @api_view(['POST'])

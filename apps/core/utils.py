@@ -1,6 +1,5 @@
 from decimal import Decimal
 from django.db.models import F
-from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,20 +56,4 @@ def add_balance(user, amount, reference):
     profile.refresh_from_db()
     logger.info(f"Balance added for {user.email}: +₦{amount:,.2f} (Reference: {reference})")
     return True
-
-
-def build_file_url(file_field, request=None):
-    if not file_field:
-        return None
-    
-    relative_url = file_field.url if hasattr(file_field, 'url') else str(file_field)
-    
-    if request:
-        return request.build_absolute_uri(relative_url)
-    
-    if hasattr(settings, 'BASE_URL'):
-        base_url = settings.BASE_URL.rstrip('/')
-        return f"{base_url}{relative_url}"
-    
-    return relative_url
 

@@ -26,10 +26,9 @@ COPY . /app/
 # Create entrypoint script
 RUN chmod +x /app/scripts/entrypoint.sh
 
-# Expose port (Render uses PORT env var, default to 8000)
+# Expose port
 EXPOSE 8000
 
-# Run entrypoint (entrypoint.sh will use gunicorn if no command is provided)
+# Run entrypoint
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]
-CMD []
 
