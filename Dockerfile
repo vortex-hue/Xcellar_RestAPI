@@ -33,5 +33,5 @@ EXPOSE 8000
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 
 # Start server
-CMD ["gunicorn", "xcellar.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["sh", "-c", "exec gunicorn xcellar.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
 
