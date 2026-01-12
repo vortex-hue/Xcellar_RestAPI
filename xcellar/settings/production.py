@@ -30,6 +30,20 @@ X_FRAME_OPTIONS = 'DENY'
 
 CSRF_TRUSTED_ORIGINS = ['https://xcellarrestapi-production.up.railway.app']
 
+# Cache - Use local memory instead of Redis (since Redis is not available)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Session - Use database-backed sessions instead of cache
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Disable rate limiting (depends on Redis cache)
+RATELIMIT_ENABLE = False
+
 # Static files
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
