@@ -45,3 +45,6 @@ twilio==8.10.0
 # ASGI Support
 uvicorn[standard]==0.24.0
 
+# Deployment
+gunicorn==21.2.0
+
