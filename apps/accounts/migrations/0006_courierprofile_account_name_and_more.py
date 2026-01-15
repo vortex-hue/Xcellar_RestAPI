@@ -7,6 +7,12 @@ import django.db.models.deletion
 
 def check_column_exists(cursor, table_name, column_name):
     """Check if a column exists in a table"""
+    import django.db
+    if django.db.connection.vendor == 'sqlite':
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        columns = [row[1] for row in cursor.fetchall()]
+        return column_name in columns
+    
     cursor.execute("""
         SELECT column_name 
         FROM information_schema.columns 
@@ -67,33 +73,39 @@ def add_fields_safely(apps, schema_editor):
         # Check and add approved_by foreign key if it doesn't exist
         if not check_column_exists(cursor, table_name, 'approved_by_id'):
             try:
-                # First add the column
-                if vendor == 'postgresql':
+                if vendor == 'sqlite':
+                    # SQLite supports adding REFERENCES inline during ADD COLUMN
+                    cursor.execute(
+                        f'ALTER TABLE {table_name} ADD COLUMN approved_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+                    )
+                elif vendor == 'postgresql':
+                    # First add the column
                     cursor.execute(
                         f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS approved_by_id INTEGER'
                     )
+                    
+                    # Then add the foreign key constraint (check if constraint exists first)
+                    cursor.execute("""
+                        SELECT constraint_name 
+                        FROM information_schema.table_constraints 
+                        WHERE table_name=%s AND constraint_type='FOREIGN KEY' 
+                        AND constraint_name LIKE %s
+                    """, [table_name, '%approved_by%'])
+                    
+                    if not cursor.fetchone():
+                        # Constraint doesn't exist, add it
+                        cursor.execute(f"""
+                            ALTER TABLE {table_name} 
+                            ADD CONSTRAINT courier_profiles_approved_by_id_fk 
+                            FOREIGN KEY (approved_by_id) 
+                            REFERENCES users (id) 
+                            ON DELETE SET NULL
+                        """)
                 else:
+                    # Generic fallback
                     cursor.execute(
                         f'ALTER TABLE {table_name} ADD COLUMN approved_by_id INTEGER'
                     )
-                
-                # Then add the foreign key constraint (check if constraint exists first)
-                cursor.execute("""
-                    SELECT constraint_name 
-                    FROM information_schema.table_constraints 
-                    WHERE table_name=%s AND constraint_type='FOREIGN KEY' 
-                    AND constraint_name LIKE %s
-                """, [table_name, '%approved_by%'])
-                
-                if not cursor.fetchone():
-                    # Constraint doesn't exist, add it
-                    cursor.execute(f"""
-                        ALTER TABLE {table_name} 
-                        ADD CONSTRAINT courier_profiles_approved_by_id_fk 
-                        FOREIGN KEY (approved_by_id) 
-                        REFERENCES users (id) 
-                        ON DELETE SET NULL
-                    """)
             except Exception as e:
                 error_msg = str(e).lower()
                 if 'already exists' in error_msg or 'duplicate' in error_msg:

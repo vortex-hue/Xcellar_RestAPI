@@ -234,3 +234,51 @@ def verify_account(request):
         logger.error(f"Error verifying account: {e}", exc_info=True)
         return error_response('Failed to verify account. Please try again.', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@extend_schema(
+    tags=['Core'],
+    summary='Get Nigerian States',
+    description='Get a list of all 36 states in Nigeria plus FCT.',
+    responses={
+        200: {
+            'description': 'List of states',
+            'examples': {
+                'application/json': {
+                    'status': True,
+                    'states': [
+                        'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 
+                        'Bayelsa', 'Benue', 'Borno', 'Cross River', 'Delta', 
+                        'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe', 'Imo', 
+                        'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 
+                        'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 
+                        'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 
+                        'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Federal Capital Territory'
+                    ],
+                    'count': 37
+                }
+            }
+        },
+        401: {'description': 'Authentication required'},
+    },
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_states(request):
+    """
+    Get list of Nigerian states.
+    GET /api/v1/core/states/
+    """
+    states = [
+        'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 
+        'Bayelsa', 'Benue', 'Borno', 'Cross River', 'Delta', 
+        'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe', 'Imo', 
+        'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 
+        'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 
+        'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 
+        'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Federal Capital Territory'
+    ]
+    return success_response(
+        data={'states': states, 'count': len(states)},
+        message='States retrieved successfully'
+    )
+
