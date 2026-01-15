@@ -139,6 +139,14 @@ fi
 USER_AUTH_HEADER="-H \"Authorization: Bearer $USER_TOKEN\""
 COURIER_AUTH_HEADER="-H \"Authorization: Bearer $COURIER_TOKEN\""
 
+# 3.5 Auth & Dashboards
+echo -e "\n${YELLOW}=== 3.5 Auth & Dashboards ===${NC}"
+test_endpoint "GET" "/auth/profile/" "Get User Profile" "" "$USER_TOKEN"
+test_endpoint "GET" "/auth/profile/" "Get Courier Profile" "" "$COURIER_TOKEN"
+test_endpoint "GET" "/users/dashboard/" "User Dashboard" "" "$USER_TOKEN"
+test_endpoint "GET" "/couriers/dashboard/" "Courier Dashboard" "" "$COURIER_TOKEN"
+test_endpoint "GET" "/couriers/license/" "Get Driver License" "" "$COURIER_TOKEN"
+
 # 4. Marketplace Endpoints
 echo -e "\n${YELLOW}=== 4. Marketplace Endpoints ===${NC}"
 test_endpoint "GET" "/marketplace/categories/" "List Categories" "" ""
@@ -154,6 +162,12 @@ test_endpoint "GET" "/orders/list/" "List Orders (User)" "" "$USER_TOKEN"
 echo -e "\n${YELLOW}=== 6. Orders Endpoints (Courier) ===${NC}"
 test_endpoint "GET" "/orders/available/" "Available Orders (Courier)" "" "$COURIER_TOKEN"
 
+# 6.5 Payments Endpoints
+echo -e "\n${YELLOW}=== 6.5 Payments Endpoints ===${NC}"
+test_endpoint "GET" "/payments/balance/" "Get User Balance" "" "$USER_TOKEN"
+test_endpoint "GET" "/payments/transactions/" "List Transactions" "" "$USER_TOKEN"
+test_endpoint "GET" "/payments/notifications/" "List Notifications" "" "$USER_TOKEN"
+
 # 7. Help Endpoints
 echo -e "\n${YELLOW}=== 7. Help Endpoints ===${NC}"
 HELP_DATA="{
@@ -164,6 +178,7 @@ HELP_DATA="{
     \"user_email\": \"test@example.com\"
 }"
 test_endpoint "POST" "/help/request/" "Submit Help Request" "$HELP_DATA" ""
+test_endpoint "GET" "/help/my-requests/" "List My Help Requests" "" "$USER_TOKEN"
 
 # 8. FAQ Endpoints
 echo -e "\n${YELLOW}=== 8. FAQ Endpoints ===${NC}"
@@ -172,6 +187,7 @@ test_endpoint "GET" "/faq/" "List FAQs" "" ""
 # 9. Core Endpoints
 echo -e "\n${YELLOW}=== 9. Core Endpoints ===${NC}"
 test_endpoint "GET" "/core/states/" "List States" "" ""
+test_endpoint "GET" "/core/banks/" "List Banks" "" ""
 
 # Summary
 echo -e "\n=========================================="
@@ -180,6 +196,75 @@ echo "=========================================="
 echo -e "${GREEN}Passed: $TESTS_PASSED${NC}"
 echo -e "${RED}Failed: $TESTS_FAILED${NC}"
 echo "Total: $((TESTS_PASSED + TESTS_FAILED))"
+
+# 10. Advanced Flow (Marketplace -> Order -> Delivery)
+echo -e "\n${YELLOW}=== 10. Advanced Flow ===${NC}"
+
+# A. Get a Product ID
+PRODUCT_ID=$(curl -s -X GET "$BASE_URL/marketplace/products/" -H "Content-Type: application/json" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('products', [{}])[0].get('id', ''))" 2>/dev/null)
+
+if [ -z "$PRODUCT_ID" ]; then
+    echo -e "${RED}Skipping Advanced Flow: No products found${NC}"
+else
+    echo "Using Product ID: $PRODUCT_ID"
+    
+    # B. Add to Cart
+    CART_DATA="{
+        \"product_id\": $PRODUCT_ID,
+        \"quantity\": 1
+    }"
+    test_endpoint "POST" "/marketplace/cart/add/" "Add to Cart" "$CART_DATA" "$USER_TOKEN"
+    
+    # C. Checkout (Create Order)
+    CHECKOUT_DATA="{
+        \"delivery_address\": \"123 Test St\",
+        \"delivery_phone\": \"+1234567890\",
+        \"notes\": \"Leave at door\"
+    }"
+    
+    # Capture full response to get order ID
+    # Note: checkout might return {status: ..., order_id: ...} or {order: {id: ...}}
+    response=$(curl -s -X POST "$BASE_URL/marketplace/cart/checkout/" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $USER_TOKEN" \
+        -d "$CHECKOUT_DATA")
+    
+    ORDER_ID=$(echo "$response" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('order_id', '') or data.get('order', {}).get('id', ''))" 2>/dev/null)
+    
+    if [ -n "$ORDER_ID" ]; then
+        echo "Order Created: $ORDER_ID"
+        
+        # D. Force Pay (Backdoor via Shell)
+        echo "Forcing payment status to PAID via shell..."
+        python3 manage.py shell --command="from apps.orders.models import Order; Order.objects.filter(id=$ORDER_ID).update(payment_status='PAID')" --settings=xcellar.settings.sqlite_test > /dev/null 2>&1
+        
+        # E. Confirm Order
+        test_endpoint "POST" "/orders/$ORDER_ID/confirm/" "Confirm Order" "" "$USER_TOKEN"
+        
+        # F. Courier Sees Available Order
+        # Should now appear in available orders
+        test_endpoint "GET" "/orders/available/" "Verify Order Available for Courier" "" "$COURIER_TOKEN"
+        
+        # G. Courier Accepts Order
+        test_endpoint "POST" "/orders/$ORDER_ID/accept/" "Courier Accepts Order" "" "$COURIER_TOKEN"
+        
+        # H. Update Status (Picked Up)
+        STATUS_DATA="{ \"status\": \"PICKED_UP\", \"location\": \"Store\", \"notes\": \"Picked up package\" }"
+        test_endpoint "PATCH" "/orders/$ORDER_ID/update-status/" "Courier Updates Status (PICKED_UP)" "$STATUS_DATA" "$COURIER_TOKEN"
+        
+        # H.1. Update Status (In Transit)
+        STATUS_DATA="{ \"status\": \"IN_TRANSIT\", \"location\": \"On the way\", \"notes\": \"Heading to destination\" }"
+        test_endpoint "PATCH" "/orders/$ORDER_ID/update-status/" "Courier Updates Status (IN_TRANSIT)" "$STATUS_DATA" "$COURIER_TOKEN"
+        
+        # I. Update Status (Delivered)
+        STATUS_DATA="{ \"status\": \"DELIVERED\", \"location\": \"Customer\", \"notes\": \"Delivered to customer\" }"
+        test_endpoint "PATCH" "/orders/$ORDER_ID/update-status/" "Courier Updates Status (DELIVERED)" "$STATUS_DATA" "$COURIER_TOKEN"
+        
+    else
+        echo -e "${RED}Failed to create order. Skipping remaining steps.${NC}"
+        echo "$response"
+    fi
+fi
 
 if [ $TESTS_FAILED -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed! ✓${NC}"

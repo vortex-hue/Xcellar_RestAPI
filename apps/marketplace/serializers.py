@@ -29,7 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'store_name', 'category_name', 'name', 'slug', 'description',
                   'short_description', 'price', 'compare_at_price', 'sku',
                   'stock_quantity', 'weight_kg', 'dimensions',
-                  'is_available', 'is_featured', 'rating', 'total_sales']
+                  'is_available', 'is_featured', 'rating', 'total_sales', 'images']
 
 
 class CartItemSerializer(serializers.ModelSerializer):
