@@ -4,19 +4,50 @@ from apps.marketplace.models import Category, Store, Product, Cart, CartItem
 
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer for Category"""
+    icon_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'icon', 'is_featured']
+        fields = ['id', 'name', 'slug', 'description', 'icon', 'icon_url', 'is_featured']
+    
+    def get_icon_url(self, obj):
+        """Get full URL for icon"""
+        if obj.icon:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.icon.url)
+            return obj.icon.url
+        return None
 
 
 class StoreSerializer(serializers.ModelSerializer):
     """Serializer for Store"""
+    logo_url = serializers.SerializerMethodField()
+    cover_image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Store
-        fields = ['id', 'name', 'slug', 'description', 'owner_name', 'logo', 'cover_image',
+        fields = ['id', 'name', 'slug', 'description', 'owner_name', 'logo', 'logo_url', 
+                  'cover_image', 'cover_image_url',
                   'address', 'phone_number', 'email', 'rating', 'total_sales', 'is_verified']
+    
+    def get_logo_url(self, obj):
+        """Get full URL for logo"""
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        return None
+    
+    def get_cover_image_url(self, obj):
+        """Get full URL for cover image"""
+        if obj.cover_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.cover_image.url)
+            return obj.cover_image.url
+        return None
 
 
 class ProductSerializer(serializers.ModelSerializer):

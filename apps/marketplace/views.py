@@ -34,7 +34,7 @@ from apps.core.permissions import IsUser
 def list_categories(request):
     """List all product categories"""
     categories = Category.objects.filter(is_active=True).order_by('name')
-    serializer = CategorySerializer(categories, many=True)
+    serializer = CategorySerializer(categories, many=True, context={'request': request})
     return success_response(data={'categories': serializer.data})
 
 
@@ -49,7 +49,7 @@ def list_categories(request):
 def list_stores(request):
     """List all active stores"""
     stores = Store.objects.filter(is_active=True).order_by('name')
-    serializer = StoreSerializer(stores, many=True)
+    serializer = StoreSerializer(stores, many=True, context={'request': request})
     return success_response(data={'stores': serializer.data})
 
 
@@ -80,7 +80,7 @@ def list_products(request):
     if featured:
         queryset = queryset.filter(is_featured=True)
     
-    serializer = ProductSerializer(queryset, many=True)
+    serializer = ProductSerializer(queryset, many=True, context={'request': request})
     return success_response(data={'products': serializer.data})
 
 
@@ -99,7 +99,7 @@ def product_detail(request, product_id):
     except Product.DoesNotExist:
         return not_found_response('Product not found. Please check the product ID and try again.')
     
-    serializer = ProductSerializer(product)
+    serializer = ProductSerializer(product, context={'request': request})
     return success_response(data={'product': serializer.data})
 
 
